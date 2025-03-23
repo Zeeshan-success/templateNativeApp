@@ -9,20 +9,30 @@ import {
   signInWithEmailAndPassword,
   signOut,
 } from "firebase/auth";
-import { auth } from "../../firebaseConfig";
+import { auth, database } from "../../firebaseConfig";
+import { ref, set, get, update, remove } from "firebase/database";
 import Toast from "react-native-toast-message";
 
 export const useSignup = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ email, password }) => {
+    mutationFn: async ({ name, email, password }) => {
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
         password
       );
       const user = userCredential.user;
+
+      const userId = userCredential.user.uid;
+
+      // Save user data to Firebase Database
+      await set(ref(database, "users/" + userId), {
+        name,
+        email,
+        createdAt: new Date().toISOString(),
+      });
 
       // ✅ Send verification email immediately
       await sendEmailVerification(user);
